@@ -5,12 +5,18 @@ import { initializeApp} from 'firebase/app';
 import { doc, setDoc, getDoc, serverTimestamp,getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_API_KEY,
-  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_APP_ID,
+  // apiKey: import.meta.env.VITE_API_KEY,
+  // authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  // projectId: import.meta.env.VITE_PROJECT_ID,
+  // storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  // messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  // appId: import.meta.env.VITE_APP_ID,
+  apiKey: "AIzaSyC3CjfPL2JCGKIO3WCvEnnPmYT8YBm7faE",
+  authDomain: "setafesic2023.firebaseapp.com",
+  projectId: "setafesic2023",
+  storageBucket: "setafesic2023.appspot.com",
+  messagingSenderId:"716883567683",
+  appId: "1:716883567683:web:c6a2dc8584a37cb8cfe0f6"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -60,10 +66,41 @@ function App() {
   const [screen, setScreen] = useState('settings');  // 初期画面は設定画面
   const [location, setLocation] = useState(null);  // 設定された場所を保存
   const [nfcId, setNfcId] = useState(null);
+  const [ws, setWs] = useState(null);
+  const reconnectInterval = 2000; // 再接続までの待ち時間 (2秒)
 
   useEffect(() => {
     console.log(`画面遷移: ${screen}`);
-  }, [screen]);
+  
+    const websocket = new WebSocket('ws://localhost');
+
+    websocket.onopen = () => {
+      console.log('WebSocket opened.');
+    };
+
+    websocket.onmessage = (event) => {
+      handleData(event.data);
+    };
+
+    websocket.onerror = (error) => {
+      console.error('WebSocket Error:', error);
+    };
+
+    websocket.onclose = (event) => {
+      console.log('WebSocket closed. Trying to reconnect...');
+      setTimeout(() => {
+        setWs(new WebSocket('ws://localhost'));
+      }, reconnectInterval);
+    };
+
+    setWs(websocket);
+
+    return () => {
+      if (websocket) {
+        websocket.close();
+      }
+    };
+}, [screen, ws]);
 
   const handleData = async (data) => {
     const result = JSON.parse(data);
@@ -81,9 +118,9 @@ function App() {
        await updateDocument(result.id, location);
      }
 
-    setTimeout(() => {
-      setScreen('results');  // ここでは、デモのために読み込み後に結果画面に自動的に遷移します。
-    }, 2000);  // 2秒後に結果画面に遷移
+    // setTimeout(() => {
+    //   setScreen('results');  // ここでは、デモのために読み込み後に結果画面に自動的に遷移します。
+    // }, 2000);  // 2秒後に結果画面に遷移
   };
 
   return (
@@ -91,7 +128,7 @@ function App() {
       {screen === 'settings' && <SettingsScreen setLocation={setLocation} setScreen={setScreen} />}
       {screen === 'waiting' && <WaitingScreen handleData={handleData} location={location}/>}
       {screen === 'loading' && <LoadingScreen />}
-      {screen === 'results' && <ResultsScreen id={nfcId} />}
+      {screen === 'results' && <ResultsScreen nfcId={nfcId} setScreen={setScreen} />}
     </div>
   );
 }
@@ -117,27 +154,26 @@ function SettingsScreen({ setLocation, setScreen }) {
 }
 
 function WaitingScreen({ handleData, location  }) {
-  useEffect(() => {
-    // ダミーデータのシミュレーション
-    const simulateWebsocketData = () => {
-      const dummyData = {
-        id: 'dummyID12345',
-      };
-      handleData(JSON.stringify(dummyData));
-    };
+  // useEffect(() => {
+  //   // ダミーデータのシミュレーション
+  //   const simulateWebsocketData = () => {
+  //     const dummyData = {
+  //       id: 'dummyID12345',
+  //     };
+  //     handleData(JSON.stringify(dummyData));
+  //   };
 
-    // 5秒後にダミーデータを送信する
-    const timeoutId = setTimeout(simulateWebsocketData, 1000);
+  //   // 5秒後にダミーデータを送信する
+  //   const timeoutId = setTimeout(simulateWebsocketData, 1000);
 
-    // コンポーネントのクリーンアップ時にタイムアウトをクリアする
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [handleData]);
+  //   // コンポーネントのクリーンアップ時にタイムアウトをクリアする
+  //   return () => {
+  //     clearTimeout(timeoutId);
+  //   };
+  // }, [handleData]);
   return (
     <div>
       <h1>{location}での待機画面</h1>
-      {/* <Websocket url='ws://localhost' onMessage={handleData} /> */}
     </div>
   );
 }
@@ -146,22 +182,51 @@ function LoadingScreen() {
   return <h1>読み込み中...</h1>;
 }
 
-function ResultsScreen({ id }) {
-  // Firestoreからのデータ取得と表示ロジックを追加
-  const fetchedData = [
-    { id: '12345', location: '場所1', timestamp: 1633759337 },
-  ];
+function ResultsScreen({ nfcId , setScreen}) {
+  const [locations, setLocations] = useState({});
 
   useEffect(() => {
-    fetchedData.forEach(data => {
-      console.log(`ID読み込み: ${data.id}, 場所: ${data.location}, タイムスタンプ: ${data.timestamp}`);
-    });
-  }, [fetchedData]);
+    const fetchResults = async () => {
+      if (nfcId) {
+        const docRef = doc(db, 'nfcIDs', nfcId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setLocations(docSnap.data());
+        }
+      }
+    };
+    fetchResults();
+  }, [nfcId]);
+
+  useEffect(() => {
+    // 例: 10秒後に待機画面に戻る
+    const timer = setTimeout(() => {
+      setScreen('waiting');
+    }, 1000);
+
+    // コンポーネントのアンマウント時にタイマーをクリアする
+    return () => clearTimeout(timer);
+  }, [setScreen]);
 
   return (
     <div>
-      <h1>結果画面</h1>
-      <p>ID: {id}</p>
+      <h1>結果確認画面</h1>
+      <table border="1">
+        <thead>
+          <tr>
+            <th>Location</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {["1", "2", "3", "4", "5"].map((location) => (
+            <tr key={location}>
+              <td>{location}</td>
+              <td>{locations[location]?.status ? "True" : "False"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
