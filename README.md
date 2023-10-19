@@ -17,3 +17,5 @@ https://setafesic2023.web.app/
 # 実行環境
 ## Python
 ``` pip install nfcpy websocket-server ```
+
+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
