@@ -42,9 +42,14 @@
 }
 
 header {
-  background-color: #f5f5f5; /* ヘッダーの背景色を薄いグレーに */
-  padding: 10px 20px;        /* ヘッダーのパディング */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* ほんのりとした影をヘッダーに追加 */
+  position: absolute;  /* 絶対位置を指定 */
+  top: 20px;              /* 上端からの距離を0にする */
+  left: 5px;            /* 右端からの距離を0にする */
+  font-size: 70px;     /* 文字の大きさを35pxに設定 */
+  color: black;        /* 文字の色を黒に設定 */
+  padding: 10px;       /* ヘッダーの内側の余白を設定 */
+  background-color: #fff;  /* 背景色を白に設定（必要に応じて変更可） */
+  z-index: 10;         /* 他の要素の上に表示させるためのz-index */
 }
 
 header h1 {
@@ -68,6 +73,16 @@ header h1 {
   flex: 1; 
   border: 1px solid black;
   padding: 10px;
+  font-size: 35px;  /* フォントサイズを35pxに */
   text-align: center;
   box-sizing: border-box; 
+}
+
+.message-waiting {
+  font-size: 50px;      /* フォントの大きさを50pxに設定 */
+  font-weight: bold;    /* フォントを太字にする */
+  color: black;         /* 文字の色を黒に設定 */
+  text-align: center;   /* テキストを中央揃えにする */
+  padding: 20px;        /* メッセージの周囲の余白を設定 */
+  margin-top: 100px;    /* メッセージの上の余白を設定（必要に応じて変更） */
 }
