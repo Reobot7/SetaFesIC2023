@@ -233,6 +233,7 @@
 // }
 
 // export default App;
+import './App.css'
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { initializeApp } from 'firebase/app';
@@ -261,6 +262,7 @@ function Settings({ setLocation }) {
 
   return (
     <div>
+      <Header/>
       <button onClick={() => handleLocationSelect(1)}>1</button>
       <button onClick={() => handleLocationSelect(2)}>2</button>
     </div>
@@ -292,7 +294,13 @@ function WaitingScreen({ setNFCData, websocket }) {
     };
   }, [setNFCData, websocket, navigate]);
 
-  return <p>Waiting for NFC...</p>;
+  return (
+  <div>
+    <Header/>
+    <img src={`${window.location.origin}/C2622.png`}/>
+    <p>ICカードをタッチしてください</p>
+    </div>
+  );
 }
 
 
@@ -332,7 +340,11 @@ function WaitingScreen({ setNFCData, websocket }) {
       }
     }, [nfcData, setNFCResult, navigate, location]);
   
-    return <p>Loading...</p>;
+    return (
+      <div>
+      <Header /> 
+      <img src={`${window.location.origin}/D8739.png`}/>
+    </div>);
   }
 
 
@@ -348,6 +360,7 @@ function WaitingScreen({ setNFCData, websocket }) {
     }, [navigate]);
     return (
         <div>
+          <Header /> 
           <p>NFC Detected!</p>
           <table>
             <tbody>
@@ -374,6 +387,14 @@ function WaitingScreen({ setNFCData, websocket }) {
         </div>
       );
 
+  }
+
+  function Header() {
+    return (
+      <header>
+        <h1>ICトレジャーハント</h1>
+      </header>
+    );
   }
 
 function App() {
