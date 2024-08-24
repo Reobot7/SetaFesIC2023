@@ -1,6 +1,5 @@
-# Project Title
+# SetaFesIC2023
 
-一行でプロジェクトの説明を記述します。
 
 ## 概要
 
